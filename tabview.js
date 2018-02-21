@@ -1,38 +1,65 @@
-chrome.runtime.sendMessage({type: "tabs"}, function(response) {
+function getUpdate() {
+    // request latest data
+    chrome.runtime.sendMessage({type: "tabs"}, function(response) {
+        redraw (response.windows, response.screenshots);
+    });
+}
 
-    console.log(response);
+function redraw(windows, screenshots) {
+    document.getElementById('app').innerHTML = "";
 
-    response.windows.forEach(window => {
+    windows.forEach(window => {
         window.tabs.forEach(tab => {
-            
-            // create div with background image
-            var tabDiv = document.createElement('div');
-            tabDiv.className = "tab";
-            tabDiv.style.backgroundImage = "url(" + response.screenshots[tab.id] + ")";
+            // ideally this would be checking for extension tabs, not just this one
+            if (true) {
+                // create div 
+                var tabDiv = document.createElement('div');
+                tabDiv.className = "tab";
+    
+                // create open button
+                var tabButton = document.createElement('button');
+                if (tab.favIconUrl) {
+                    tabButton.innerHTML = '<img src="' + tab.favIconUrl + '">';
+                }
+                tabButton.innerHTML += tab.title;
+                tabButton.addEventListener('click', function() {
+                    chrome.tabs.highlight({windowId: window.id, tabs: tab.index});
+                });
+                tabDiv.appendChild(tabButton);
+    
+                // create close button
+                var closeButton = document.createElement('button');
+                closeButton.innerText = "X";
+                closeButton.addEventListener('click', function(){
+                    chrome.tabs.remove(tab.id);
+                    getUpdate();
+                });
+                tabButton.appendChild(closeButton);
+    
+    
+                // create tab screenshot
+                var tabScreen = document.createElement('div');
+                tabScreen.style.backgroundImage = "url(" + screenshots[tab.id] + ")";
+                tabScreen.className = "tab-screen";
+                tabDiv.appendChild(tabScreen);
+    
+    
+                document.getElementById('app').appendChild(tabDiv);
 
-            // create close button
-            var closeButton = document.createElement('button');
-            closeButton.innerText = "X";
-            closeButton.addEventListener('click', function(){
-                chrome.tabs.remove(tab.id);
-            });
-            tabDiv.appendChild(closeButton);
-
-            // create open button
-            var tabButton = document.createElement('button');
-            tabButton.innerText = tab.title;
-            tabButton.addEventListener('click', function() {
-                chrome.tabs.highlight({windowId: window.id, tabs: tab});
-            });
-            tabDiv.appendChild(tabButton);
-
-
-            document.getElementById('app').appendChild(tabDiv);
-
+            }
         });
     });
+}
 
+getUpdate();
+
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    // redraw the new data
+    if (request.type == "newData") {
+        console.log(request.reason);
+        redraw(request.windows, request.screenshots);
+    }
 });
 
-
-// Need to refresh when window closed? Other events to refresh
+// Sortable js
+// hide extension tabs (maybe just regex urls)

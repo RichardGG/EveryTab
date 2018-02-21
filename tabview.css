@@ -9,15 +9,22 @@
 .tab {
     width: 50%;
     height: 500px;
-    background-size: 100%;
-    background-position: 50% 0%;
+    
     border: 2px solid black;
     margin: 0px;
 
-    transition: background-position 0.3s;
+    display: flex;
+    flex-direction: column;
 }
 
-.tab:hover {
+.tab-screen {
+    background-size: 100%;
+    background-position: 50% 0%;
+    transition: background-position 0.3s;
+    flex-grow: 1;
+}
+
+.tab:hover .tab-screen {
     background-position: 50% 100%;
 }
 
