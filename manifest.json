@@ -1,6 +1,6 @@
 {
-    "name": "Quick Tabs",
-    "description": "Mission Control (Expose) / Task View - like tab manager",
+    "name": "EveryTab",
+    "description": "Quickly switch between tabs using a visual overview",
     "version": "1.0",
     "manifest_version": 2,
     "permissions": [
@@ -16,6 +16,17 @@
 
     "browser_action": {
         "default_title": "Quick Tabs"
+    },
+
+    "commands": {
+        "_execute_browser_action": {
+            "suggested_key": {
+              "windows": "Ctrl+E",
+              "mac": "Command+E",
+              "chromeos": "Ctrl+E",
+              "linux": "Ctrl+E"
+            }
+          }
     }
 
 }

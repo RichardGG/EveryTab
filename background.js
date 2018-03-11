@@ -1,32 +1,50 @@
 var state = {
     screenshots: {},
-    windows: []
+    windows: [],
 };
+
 
 // on Quick Tabs button click
 chrome.browserAction.onClicked.addListener(function (tab) {
-    // open tabview
-    chrome.tabs.create({url: 'tabview.html', pinned: true});
+    // save screenshot, current tab id, open tabview
+    chrome.tabs.captureVisibleTab(null, {format: 'png'}, function(dataUrl) {
+        state.screenshots[tab.tabId] = dataUrl;
+        state.current = tab.tabId;
+
+        // check for extension tab
+        chrome.tabs.query(
+            {
+                windowId: chrome.windows.WINDOW_ID_CURRENT, 
+                url: 'chrome-extension://' + chrome.runtime.id + '/tabview.html'
+            }, 
+            function(tabs) {
+                // if tab exists, switch to it
+                if (tabs.length) {
+                    var tab = tabs[0];
+                    chrome.tabs.highlight({windowId: tab.windowId, tabs: tab.index});
+                } else {
+                    // otherwise, create it
+                    chrome.tabs.create({url: 'tabview.html', pinned: true},
+                        function (tab) {
+                            state.extension = tab.id
+                            console.log(tab);
+                        }
+                    );
+                }
+            }
+        );
+        
+    });
 });
 
 // on tab switch
 chrome.tabs.onActivated.addListener(function (activeInfo) {
-    // close tabview
-    chrome.tabs.query({url: 'chrome-extension://*/tabview.html'}, function(tabs) {
-        tabs.forEach(function(tab) {
-            if (activeInfo.tabId != tab.id) {
-                //chrome.tabs.remove(tab.id);
-            }
-        })
-    });
-
     // save screenshot / update tabview
     chrome.tabs.captureVisibleTab(null, {format: 'png'}, function(dataUrl) {
         state.screenshots[activeInfo.tabId] = dataUrl;
         chrome.runtime.sendMessage({
             type: 'newData', 
-            screenshots: state.screenshots, 
-            windows: state.windows,
+            state: state,
             reason: 'Tab Switch'
         });
     });
@@ -37,7 +55,8 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     // save data, respond with data
     if (request.type == 'tabs') {
         updateTabData(function() {
-            sendResponse({screenshots: state.screenshots, windows: state.windows});
+            console.log('done');
+            sendResponse({state: state});
         });
     }
 });
@@ -47,8 +66,7 @@ chrome.tabs.onCreated.addListener(function (tab) {
     updateTabData(function() {
         chrome.runtime.sendMessage({
             type: 'newData', 
-            screenshots: state.screenshots, 
-            windows: state.windows,
+            state: state,
             reason: 'New Tab'
         });
     });
@@ -58,19 +76,18 @@ chrome.tabs.onUpdated.addListener(function (tab) {
     updateTabData(function() {
         chrome.runtime.sendMessage({
             type: 'newData', 
-            screenshots: state.screenshots, 
-            windows: state.windows,
+            state: state,
             reason: 'Tab Updated'
         });
     });
 });
 // on tab closed
-chrome.tabs.onRemoved.addListener(function (tab) {
+chrome.tabs.onRemoved.addListener(function (tabId) {
+    delete state.screenshots[tabId];
     updateTabData(function() {
         chrome.runtime.sendMessage({
             type: 'newData', 
-            screenshots: state.screenshots, 
-            windows: state.windows,
+            state: state,
             reason: 'Tab Closed'
         });
     });
@@ -80,8 +97,7 @@ chrome.tabs.onMoved.addListener(function (tab) {
     updateTabData(function() {
         chrome.runtime.sendMessage({
             type: 'newData', 
-            screenshots: state.screenshots, 
-            windows: state.windows,
+            state: state,
             reason: 'Moved within window'
         });
     });
@@ -91,8 +107,7 @@ chrome.tabs.onDetached.addListener(function (tab) {
     updateTabData(function() {
         chrome.runtime.sendMessage({
             type: 'newData', 
-            screenshots: state.screenshots, 
-            windows: state.windows,
+            state: state,
             reason: 'Detached from window'
         });
     });
@@ -102,8 +117,7 @@ chrome.tabs.onAttached.addListener(function (tab) {
     updateTabData(function() {
         chrome.runtime.sendMessage({
             type: 'newData', 
-            screenshots: state.screenshots, 
-            windows: state.windows,
+            state: state,
             reason: 'Attached to window'
         });
     });
@@ -116,8 +130,25 @@ function updateTabData(callback) {
     });
 }
 
+setInterval(function(){
+    chrome.tabs.query({
+        windowId: chrome.windows.WINDOW_ID_CURRENT, 
+        active: true
+    },function(tabs) {
+        if (tabs.length) {
+            var tab = tabs[0];
+            chrome.tabs.captureVisibleTab(null, {format: 'png'}, function(dataUrl) {
+                state.screenshots[tab.id] = dataUrl;
+                chrome.runtime.sendMessage({
+                    type: 'newData', 
+                    state: state,
+                    reason: 'Screenshot'
+                });
+            });
+        }
+    });
+}, 15000);
 
-
-// Delete screenshots on tab close
+// reopen tab on activation
+// Random cleanup of screenshots? check if tab still exists
 // Save top of page screenshot
-// Button to switch to tabview (instead of reopen)
