@@ -7,6 +7,24 @@
     background-color: #F4F4F4;
     border-bottom: 1px solid #D7D7D7;
     display: flex;
+    z-index: 100;
+}
+
+#windows {
+    display: flex;
+    flex-grow: 1;
+    justify-content: center;
+    align-items: flex-start;
+
+}
+
+.window-panel {
+    width: 200px;
+    border: 2px solid black;
+}
+
+.window-screenshot {
+    padding-bottom: 50%;
 }
 
 #tabs {
@@ -29,7 +47,7 @@
     padding: 5px;
 }
 .tab-header {
-    font-size: 16px;
+    font-size: 14px;
     display: flex;
     align-items: center;
     background-color: #ECECEC;
@@ -37,8 +55,6 @@
     height: 40px;
     border: 1px solid #ABABAB;
     cursor: move;
-    /* border-top-left-radius: 10px;
-    border-top-right-radius: 10px; */
 }
 .tab-header .tab-favicon img {
     width: 20px;
@@ -95,8 +111,6 @@
     cursor: pointer;
     position: relative;
     background-color: #ECECEC;
-    /* border-bottom-left-radius: 10px;
-    border-bottom-right-radius: 10px; */
 }
 .tab-screenshot:after {
     content: '';
@@ -120,8 +134,6 @@
     font-size: 16px;
     opacity: 0;
     transition: opacity 0.3s;
-    word-wrap: break-word;
-    word-break: break-all;
     padding: 20px;
 }
 .tab-label .tab-label-title {
@@ -129,6 +141,8 @@
 }
 .tab-label .tab-label-url {
     opacity: 0.6;
+    word-wrap: break-word;
+    word-break: break-all;
 }
 .tab-screenshot:hover:after,
 .tab-screenshot:hover .tab-label {

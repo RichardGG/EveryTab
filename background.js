@@ -7,9 +7,8 @@ var state = {
 // on Quick Tabs button click
 chrome.browserAction.onClicked.addListener(function (tab) {
     // save screenshot, current tab id, open tabview
-    chrome.tabs.captureVisibleTab(null, {format: 'png'}, function(dataUrl) {
-        state.screenshots[tab.tabId] = dataUrl;
-        state.current = tab.tabId;
+    chrome.tabs.captureVisibleTab(null, {format: 'jpeg'}, function(dataUrl) {
+        state.screenshots[tab.id] = dataUrl;
 
         // check for extension tab
         chrome.tabs.query(
@@ -22,6 +21,11 @@ chrome.browserAction.onClicked.addListener(function (tab) {
                 if (tabs.length) {
                     var tab = tabs[0];
                     chrome.tabs.highlight({windowId: tab.windowId, tabs: tab.index});
+                    chrome.runtime.sendMessage({
+                        type: 'newData', 
+                        state: state,
+                        reason: 'Activate Plugin'
+                    });
                 } else {
                     // otherwise, create it
                     chrome.tabs.create({url: 'tabview.html', pinned: true},
@@ -40,7 +44,7 @@ chrome.browserAction.onClicked.addListener(function (tab) {
 // on tab switch
 chrome.tabs.onActivated.addListener(function (activeInfo) {
     // save screenshot / update tabview
-    chrome.tabs.captureVisibleTab(null, {format: 'png'}, function(dataUrl) {
+    chrome.tabs.captureVisibleTab(null, {format: 'jpeg'}, function(dataUrl) {
         state.screenshots[activeInfo.tabId] = dataUrl;
         chrome.runtime.sendMessage({
             type: 'newData', 
@@ -137,7 +141,7 @@ setInterval(function(){
     },function(tabs) {
         if (tabs.length) {
             var tab = tabs[0];
-            chrome.tabs.captureVisibleTab(null, {format: 'png'}, function(dataUrl) {
+            chrome.tabs.captureVisibleTab(null, {format: 'jpeg'}, function(dataUrl) {
                 state.screenshots[tab.id] = dataUrl;
                 chrome.runtime.sendMessage({
                     type: 'newData', 

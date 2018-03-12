@@ -12,6 +12,7 @@ function getUpdate() {
 function redraw(windows, screenshots) {
     // clear everything
     document.querySelector('#tabs').innerHTML = "";
+    document.querySelector('#windows').innerHTML = "";
 
     // resize controls
     var sizes = ["16.65%", "20%", "25%", "33.33%", "50%", "100%"];
@@ -36,6 +37,28 @@ function redraw(windows, screenshots) {
     onResize();
 
     windows.forEach(window => {
+
+        var windowPanel  = document.querySelector('#window-template .window-panel').cloneNode(true);
+        var windowIcons  = windowPanel.querySelector('.window-icons');
+        var windowCount  = windowPanel.querySelector('.window-count');
+        var windowScreen = windowPanel.querySelector('.window-screenshot');
+        var windowTitle  = windowPanel.querySelector('.window-title');
+
+        // add content
+        windowCount.textContent = window.tabs.length;
+        // tabFavicon.innerHTML = '<img src="' + tab.favIconUrl + '">';
+        // tabTitle.textContent = tab.title;
+        // tabTitle.title = tab.title;
+        // tabScreen.style.backgroundImage = "url(" + screenshots[tab.id] + ")";
+        // tabLabelT.textContent = tab.title;
+        // if (tab.title != tab.url) {
+        //     tabLabelU.textContent = tab.url;
+        // }
+
+        // add to page
+        document.querySelector('#windows').appendChild(windowPanel);
+
+
         window.tabs.forEach(tab => {
             // ideally this would be ignoring extension tabs
             if (tab.url != 'chrome-extension://' + chrome.runtime.id + '/tabview.html') {
@@ -95,5 +118,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     }
 });
 
+// Tabs by window
+// Cool animation
 // Sortable js
 // hide extension tabs (maybe just regex urls)
