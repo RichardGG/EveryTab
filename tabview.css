@@ -20,20 +20,82 @@
 
 .window-panel {
     width: 200px;
-    border: 2px solid black;
+    cursor: pointer;
+    margin: 5px;
+    border: 1px solid #ABABAB;
+}
+.window-panel.active {
+    border: 1px solid black;
 }
 
+.window-panel .window-header {
+    background-color: #ECECEC;
+    padding: 5px 10px;
+    height: 40px;
+    border-bottom: 1px solid #ABABAB;
+    position: relative;
+}
+.window-header .window-icons {
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+}
+.window-header .window-icons img {
+    width: 20px;
+    margin: 5px;
+}
+
+.window-header .window-count {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: #ABABAB;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.window-panel .window-screenshot { 
+    position: relative;
+    background-color: #ECECEC;
+    background-size: 100%;
+    background-position: 50% 0%;
+    background-repeat: no-repeat;
+    overflow: hidden;
+}
+.window-screenshot .window-title {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 80%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 5px;
+    font-size: 10px;
+    text-align: center;
+    font-weight: bold;
+}
 .window-screenshot {
     padding-bottom: 50%;
 }
 
 #tabs {
+    padding-top: 70px;
+}
+
+.tab-set {
+    display: none;
+}
+.tab-set.active {
+    display: block;
     display: flex;
     flex-wrap: wrap;
     font-size: 0;
     margin: 0;
     padding: 5px;
-    padding-top: 70px;
 }
 
 #tab-template {
@@ -111,8 +173,9 @@
     cursor: pointer;
     position: relative;
     background-color: #ECECEC;
+    overflow: hidden;
 }
-.tab-screenshot:after {
+/* .tab-screenshot:after {
     content: '';
     position: absolute;
     top: 0;
@@ -122,15 +185,17 @@
     background-color: rgba(0, 0, 0, 0.7);
     opacity: 0;
     transition: opacity 0.3s;
-}
+} */
 .tab-screenshot .tab-label {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 100%;
+    width: calc(100% - 20px);
+    border-radius: 5px;
     transform: translate(-50%, -50%);
-    color: white;
     z-index: 1;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
     font-size: 16px;
     opacity: 0;
     transition: opacity 0.3s;

@@ -1,44 +1,59 @@
 var state = {
     screenshots: {},
     windows: [],
+    lastActive: {}
 };
 
 
 // on Quick Tabs button click
 chrome.browserAction.onClicked.addListener(function (tab) {
-    // save screenshot, current tab id, open tabview
-    chrome.tabs.captureVisibleTab(null, {format: 'jpeg'}, function(dataUrl) {
-        state.screenshots[tab.id] = dataUrl;
 
-        // check for extension tab
-        chrome.tabs.query(
-            {
-                windowId: chrome.windows.WINDOW_ID_CURRENT, 
-                url: 'chrome-extension://' + chrome.runtime.id + '/tabview.html'
-            }, 
-            function(tabs) {
-                // if tab exists, switch to it
-                if (tabs.length) {
-                    var tab = tabs[0];
-                    chrome.tabs.highlight({windowId: tab.windowId, tabs: tab.index});
-                    chrome.runtime.sendMessage({
-                        type: 'newData', 
-                        state: state,
-                        reason: 'Activate Plugin'
-                    });
-                } else {
-                    // otherwise, create it
-                    chrome.tabs.create({url: 'tabview.html', pinned: true},
-                        function (tab) {
-                            state.extension = tab.id
-                            console.log(tab);
-                        }
-                    );
+    // if on extension, open last active
+    if (tab.url == 'chrome-extension://' + chrome.runtime.id + '/tabview.html') {
+        var lastActive = state.lastActive[tab.windowId];
+        if (lastActive) {
+            chrome.tabs.get(lastActive.id, function(tab) {
+                chrome.tabs.highlight({windowId: tab.windowId, tabs: tab.index});
+            });
+        }
+    } else {
+
+        // save screenshot, current tab id, open tabview
+        chrome.tabs.captureVisibleTab(null, {format: 'jpeg'}, function(dataUrl) {
+            state.screenshots[tab.id] = dataUrl;
+            state.lastActive[tab.windowId] = tab;
+    
+            // check for extension tab
+            chrome.tabs.query(
+                {
+                    windowId: chrome.windows.WINDOW_ID_CURRENT, 
+                    url: 'chrome-extension://' + chrome.runtime.id + '/tabview.html'
+                }, 
+                function(tabs) {    
+                    // if tab exists, switch to it
+                    if (tabs.length) {
+                        var tab = tabs[0];
+                        chrome.tabs.highlight({windowId: tab.windowId, tabs: tab.index});
+                        chrome.runtime.sendMessage({
+                            type: 'newData', 
+                            state: state,
+                            reason: 'Activate Plugin'
+                        });
+                    } else {
+                        // otherwise, create it
+                        chrome.tabs.create({url: 'tabview.html', pinned: true},
+                            function (tab) {
+                                state.extension = tab.id
+                                console.log(tab);
+                            }
+                        );
+                    }
                 }
-            }
-        );
-        
-    });
+            );
+            
+        });
+    }
+
 });
 
 // on tab switch
@@ -56,81 +71,49 @@ chrome.tabs.onActivated.addListener(function (activeInfo) {
 
 // on receive message
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    // save data, respond with data
+    // respond with current data, get latest data
     if (request.type == 'tabs') {
-        updateTabData(function() {
-            console.log('done');
-            sendResponse({state: state});
-        });
+        sendResponse({state: state});
+        updateTabData('Data request');
     }
 });
 
 // on tab created
 chrome.tabs.onCreated.addListener(function (tab) {
-    updateTabData(function() {
-        chrome.runtime.sendMessage({
-            type: 'newData', 
-            state: state,
-            reason: 'New Tab'
-        });
-    });
+    updateTabData('New Tab');
 });
 // on tab updated
 chrome.tabs.onUpdated.addListener(function (tab) {
-    updateTabData(function() {
-        chrome.runtime.sendMessage({
-            type: 'newData', 
-            state: state,
-            reason: 'Tab Updated'
-        });
-    });
+    updateTabData('Tab Updated');
 });
 // on tab closed
 chrome.tabs.onRemoved.addListener(function (tabId) {
     delete state.screenshots[tabId];
-    updateTabData(function() {
-        chrome.runtime.sendMessage({
-            type: 'newData', 
-            state: state,
-            reason: 'Tab Closed'
-        });
-    });
+    updateTabData('Tab Closed');
 });
 // on tab moved
 chrome.tabs.onMoved.addListener(function (tab) {
-    updateTabData(function() {
-        chrome.runtime.sendMessage({
-            type: 'newData', 
-            state: state,
-            reason: 'Moved within window'
-        });
-    });
+    updateTabData('Moved within window');
 });
 // on tab detached
 chrome.tabs.onDetached.addListener(function (tab) {
-    updateTabData(function() {
-        chrome.runtime.sendMessage({
-            type: 'newData', 
-            state: state,
-            reason: 'Detached from window'
-        });
-    });
+    updateTabData('Detached from window');
 });
 // on tab attached
 chrome.tabs.onAttached.addListener(function (tab) {
-    updateTabData(function() {
+    updateTabData('Attached to window');
+});
+
+function updateTabData(reason) {
+    chrome.windows.getAll({populate: true}, function(windows) {
+        // get last active somehow?
+
+        state.windows = windows;
         chrome.runtime.sendMessage({
             type: 'newData', 
             state: state,
-            reason: 'Attached to window'
+            reason: reason
         });
-    });
-});
-
-function updateTabData(callback) {
-    chrome.windows.getAll({populate: true}, function(windows) {
-        state.windows = windows;
-        callback();
     });
 }
 
@@ -141,18 +124,30 @@ setInterval(function(){
     },function(tabs) {
         if (tabs.length) {
             var tab = tabs[0];
-            chrome.tabs.captureVisibleTab(null, {format: 'jpeg'}, function(dataUrl) {
-                state.screenshots[tab.id] = dataUrl;
-                chrome.runtime.sendMessage({
-                    type: 'newData', 
-                    state: state,
-                    reason: 'Screenshot'
+            // capture tab if not extension
+            if (tab.url != 'chrome-extension://' + chrome.runtime.id + '/tabview.html') {
+                chrome.tabs.captureVisibleTab(null, {format: 'jpeg'}, function(dataUrl) {
+                    state.screenshots[tab.id] = dataUrl;
+                    chrome.runtime.sendMessage({
+                        type: 'newData', 
+                        state: state,
+                        reason: 'Screenshot'
+                    });
                 });
-            });
+            }
         }
     });
 }, 15000);
 
-// reopen tab on activation
 // Random cleanup of screenshots? check if tab still exists
+
+
+
+// set last active more often
+// update the tab data for active tab more often
+
+
+// possible future features:
 // Save top of page screenshot
+// Recently closed
+// Bookmark tabs?
