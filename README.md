@@ -1,3 +1,3 @@
-# EveryTab
+# TabTray
 
-Chrome extension adding a quick overview screen of all your tabs with screenshots
+Chrome extension built with react that lets you manage your tabs with drag and drop
